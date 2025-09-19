@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: mit-research-paper-generator-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python simple_server.py
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 10000
+      - key: DEBUG
+        value: false
+      - key: CORS_ORIGINS
+        value: https://your-frontend-domain.vercel.app,http://localhost:3000,http://localhost:5173
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SEMANTIC_SCHOLAR_API_KEY
+        sync: false
+      - key: PUBMED_API_KEY
+        sync: false
+      - key: CROSSREF_API_KEY
+        sync: false
+      - key: OPENALEX_API_KEY
+        sync: false
+

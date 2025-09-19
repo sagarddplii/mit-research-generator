@@ -1,0 +1,350 @@
+"""
+Download service for generating research papers in multiple formats.
+Supports PDF, DOCX, TXT, JSON, and BibTeX formats.
+"""
+
+import json
+import logging
+from typing import Dict, Any, List
+from datetime import datetime
+import tempfile
+import os
+
+class DownloadService:
+    """Service for generating downloadable research papers in multiple formats."""
+    
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.supported_formats = ['pdf', 'docx', 'txt', 'json', 'bibtex', 'markdown']
+    
+    async def generate_download(self, research_data: Dict[str, Any], format_type: str) -> Dict[str, Any]:
+        """
+        Generate downloadable content in the specified format.
+        
+        Args:
+            research_data: Complete research data including draft, references, etc.
+            format_type: Format to generate (pdf, docx, txt, json, bibtex, markdown)
+            
+        Returns:
+            Dictionary with download content and metadata
+        """
+        try:
+            self.logger.info(f"Generating download in {format_type} format")
+            
+            if format_type not in self.supported_formats:
+                raise ValueError(f"Unsupported format: {format_type}")
+            
+            # Route to appropriate formatter
+            if format_type == 'pdf':
+                return await self._generate_pdf(research_data)
+            elif format_type == 'docx':
+                return await self._generate_docx(research_data)
+            elif format_type == 'txt':
+                return await self._generate_txt(research_data)
+            elif format_type == 'json':
+                return await self._generate_json(research_data)
+            elif format_type == 'bibtex':
+                return await self._generate_bibtex(research_data)
+            elif format_type == 'markdown':
+                return await self._generate_markdown(research_data)
+            else:
+                raise ValueError(f"Format {format_type} not implemented")
+                
+        except Exception as e:
+            self.logger.error(f"Error generating {format_type} download: {str(e)}")
+            return {'error': str(e)}
+    
+    async def _generate_txt(self, research_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate plain text format."""
+        try:
+            draft = research_data.get('draft', {})
+            references = research_data.get('references', [])
+            
+            content_parts = []
+            
+            # Title
+            title = draft.get('title', 'Research Paper')
+            content_parts.append(f"{title}\n{'=' * len(title)}\n")
+            
+            # Abstract
+            if draft.get('abstract'):
+                content_parts.append(f"ABSTRACT\n--------\n{draft['abstract']}\n")
+            
+            # Sections
+            if draft.get('sections'):
+                for section_name, section_content in draft['sections'].items():
+                    section_title = section_name.replace('_', ' ').title()
+                    content_parts.append(f"{section_title.upper()}\n{'-' * len(section_title)}")
+                    
+                    if isinstance(section_content, dict) and 'content' in section_content:
+                        content_parts.append(f"{section_content['content']}\n")
+                    elif isinstance(section_content, str):
+                        content_parts.append(f"{section_content}\n")
+            
+            # References
+            if references:
+                content_parts.append("REFERENCES\n----------")
+                for i, ref in enumerate(references, 1):
+                    formatted_citation = ref.get('formatted_citation', '')
+                    if formatted_citation:
+                        content_parts.append(f"[{i}] {formatted_citation}")
+                    else:
+                        authors = ', '.join(ref.get('authors', ['Unknown']))
+                        title = ref.get('title', 'Unknown Title')
+                        year = ref.get('year', 'Unknown')
+                        content_parts.append(f"[{i}] {authors} ({year}). {title}.")
+            
+            # Metadata
+            metadata = draft.get('metadata', {})
+            if metadata:
+                content_parts.append(f"\nGenerated on: {metadata.get('generation_date', datetime.now().isoformat())}")
+                content_parts.append(f"Topic: {metadata.get('topic', 'Unknown')}")
+                content_parts.append(f"Word count: {metadata.get('word_count', 0)}")
+            
+            content = '\n\n'.join(content_parts)
+            
+            return {
+                'content': content,
+                'filename': f"{title.replace(' ', '_')}.txt",
+                'mime_type': 'text/plain',
+                'size': len(content.encode('utf-8'))
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error generating TXT: {str(e)}")
+            return {'error': str(e)}
+    
+    async def _generate_json(self, research_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate JSON format with complete data."""
+        try:
+            # Create comprehensive JSON export
+            export_data = {
+                'metadata': {
+                    'export_date': datetime.now().isoformat(),
+                    'format': 'json',
+                    'version': '1.0'
+                },
+                'research_data': research_data
+            }
+            
+            content = json.dumps(export_data, indent=2, ensure_ascii=False)
+            title = research_data.get('draft', {}).get('title', 'Research Paper')
+            
+            return {
+                'content': content,
+                'filename': f"{title.replace(' ', '_')}_complete.json",
+                'mime_type': 'application/json',
+                'size': len(content.encode('utf-8'))
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error generating JSON: {str(e)}")
+            return {'error': str(e)}
+    
+    async def _generate_markdown(self, research_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate Markdown format."""
+        try:
+            draft = research_data.get('draft', {})
+            references = research_data.get('references', [])
+            
+            content_parts = []
+            
+            # Title
+            title = draft.get('title', 'Research Paper')
+            content_parts.append(f"# {title}\n")
+            
+            # Abstract
+            if draft.get('abstract'):
+                content_parts.append(f"## Abstract\n\n{draft['abstract']}\n")
+            
+            # Sections
+            if draft.get('sections'):
+                for section_name, section_content in draft['sections'].items():
+                    section_title = section_name.replace('_', ' ').title()
+                    content_parts.append(f"## {section_title}")
+                    
+                    if isinstance(section_content, dict) and 'content' in section_content:
+                        content_parts.append(f"{section_content['content']}\n")
+                    elif isinstance(section_content, str):
+                        content_parts.append(f"{section_content}\n")
+            
+            # References
+            if references:
+                content_parts.append("## References\n")
+                for i, ref in enumerate(references, 1):
+                    formatted_citation = ref.get('formatted_citation', '')
+                    url = ref.get('url', '')
+                    
+                    if formatted_citation and url:
+                        # Make citations clickable in markdown
+                        content_parts.append(f"{i}. [{formatted_citation}]({url})")
+                    elif formatted_citation:
+                        content_parts.append(f"{i}. {formatted_citation}")
+                    else:
+                        authors = ', '.join(ref.get('authors', ['Unknown']))
+                        title = ref.get('title', 'Unknown Title')
+                        year = ref.get('year', 'Unknown')
+                        if url:
+                            content_parts.append(f"{i}. [{authors} ({year}). {title}.]({url})")
+                        else:
+                            content_parts.append(f"{i}. {authors} ({year}). {title}.")
+            
+            content = '\n\n'.join(content_parts)
+            
+            return {
+                'content': content,
+                'filename': f"{title.replace(' ', '_')}.md",
+                'mime_type': 'text/markdown',
+                'size': len(content.encode('utf-8'))
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error generating Markdown: {str(e)}")
+            return {'error': str(e)}
+    
+    async def _generate_bibtex(self, research_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate BibTeX format for references."""
+        try:
+            references = research_data.get('references', [])
+            
+            if not references:
+                return {'error': 'No references available for BibTeX export'}
+            
+            bibtex_entries = []
+            
+            for i, ref in enumerate(references, 1):
+                # Create BibTeX entry
+                title = ref.get('title', 'Unknown Title').replace('{', '').replace('}', '')
+                authors = ref.get('authors', ['Unknown'])
+                year = ref.get('year', 'Unknown')
+                journal = ref.get('journal', '')
+                url = ref.get('url', '')
+                doi = ref.get('doi', '')
+                
+                # Format authors for BibTeX
+                if len(authors) > 0:
+                    author_str = ' and '.join(authors)
+                else:
+                    author_str = 'Unknown'
+                
+                # Create entry key
+                first_author = authors[0].split()[-1] if authors and authors[0] else 'Unknown'
+                entry_key = f"{first_author}{year}_{i}"
+                
+                # Build BibTeX entry
+                entry_lines = [f"@article{{{entry_key},"]
+                entry_lines.append(f"  title={{{title}}},")
+                entry_lines.append(f"  author={{{author_str}}},")
+                entry_lines.append(f"  year={{{year}}},")
+                
+                if journal:
+                    entry_lines.append(f"  journal={{{journal}}},")
+                if doi:
+                    entry_lines.append(f"  doi={{{doi}}},")
+                if url:
+                    entry_lines.append(f"  url={{{url}}},")
+                
+                entry_lines.append("}")
+                
+                bibtex_entries.append('\n'.join(entry_lines))
+            
+            content = '\n\n'.join(bibtex_entries)
+            title = research_data.get('draft', {}).get('title', 'Research Paper')
+            
+            return {
+                'content': content,
+                'filename': f"{title.replace(' ', '_')}_references.bib",
+                'mime_type': 'application/x-bibtex',
+                'size': len(content.encode('utf-8'))
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error generating BibTeX: {str(e)}")
+            return {'error': str(e)}
+    
+    async def _generate_pdf(self, research_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate PDF format (requires additional libraries)."""
+        try:
+            # For now, return instructions for PDF generation
+            # In production, you would use libraries like reportlab or weasyprint
+            
+            content = await self._generate_txt(research_data)
+            
+            return {
+                'content': content['content'],
+                'filename': f"{research_data.get('draft', {}).get('title', 'Research Paper').replace(' ', '_')}.txt",
+                'mime_type': 'text/plain',
+                'size': content['size'],
+                'note': 'PDF generation requires additional libraries. Providing text format as fallback.'
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error generating PDF: {str(e)}")
+            return {'error': str(e)}
+    
+    async def _generate_docx(self, research_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate DOCX format (requires additional libraries)."""
+        try:
+            # For now, return instructions for DOCX generation
+            # In production, you would use python-docx library
+            
+            content = await self._generate_markdown(research_data)
+            
+            return {
+                'content': content['content'],
+                'filename': f"{research_data.get('draft', {}).get('title', 'Research Paper').replace(' ', '_')}.md",
+                'mime_type': 'text/markdown',
+                'size': content['size'],
+                'note': 'DOCX generation requires additional libraries. Providing Markdown format as fallback.'
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error generating DOCX: {str(e)}")
+            return {'error': str(e)}
+    
+    def get_supported_formats(self) -> List[Dict[str, str]]:
+        """Get list of supported download formats."""
+        return [
+            {
+                'format': 'txt',
+                'name': 'Plain Text',
+                'description': 'Simple text format, universally readable',
+                'mime_type': 'text/plain',
+                'extension': '.txt'
+            },
+            {
+                'format': 'markdown',
+                'name': 'Markdown',
+                'description': 'Formatted text with clickable links',
+                'mime_type': 'text/markdown',
+                'extension': '.md'
+            },
+            {
+                'format': 'json',
+                'name': 'JSON Data',
+                'description': 'Complete structured data export',
+                'mime_type': 'application/json',
+                'extension': '.json'
+            },
+            {
+                'format': 'bibtex',
+                'name': 'BibTeX References',
+                'description': 'Citation format for LaTeX and reference managers',
+                'mime_type': 'application/x-bibtex',
+                'extension': '.bib'
+            },
+            {
+                'format': 'pdf',
+                'name': 'PDF Document',
+                'description': 'Portable document format (requires additional setup)',
+                'mime_type': 'application/pdf',
+                'extension': '.pdf'
+            },
+            {
+                'format': 'docx',
+                'name': 'Word Document',
+                'description': 'Microsoft Word format (requires additional setup)',
+                'mime_type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'extension': '.docx'
+            }
+        ]

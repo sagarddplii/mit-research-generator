@@ -1,0 +1,6 @@
+!.env
+!vite.config.ts
+!tailwind.config.cjs
+!vercel.json
+!render.yaml
+
