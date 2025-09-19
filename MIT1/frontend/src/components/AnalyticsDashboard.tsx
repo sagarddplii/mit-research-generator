@@ -90,9 +90,10 @@ interface AnalyticsData {
 interface AnalyticsDashboardProps {
   analytics: AnalyticsData;
   loading?: boolean;
+  papers?: any[];
 }
 
-const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ analytics, loading = false }) => {
+const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ analytics, loading = false, papers = [] }) => {
   // Ensure analytics has default structure to prevent undefined errors
   const safeAnalytics = {
     paper_metrics: {
