@@ -4,23 +4,6 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
-  "env": {
-    "VITE_API_BASE_URL": "@vite_api_base_url",
-    "VITE_ENABLE_ANALYTICS": "@vite_enable_analytics",
-    "VITE_DEBUG_MODE": "@vite_debug_mode"
-  },
-  "build": {
-    "env": {
-      "VITE_API_BASE_URL": "@vite_api_base_url",
-      "VITE_ENABLE_ANALYTICS": "@vite_enable_analytics",
-      "VITE_DEBUG_MODE": "@vite_debug_mode"
-    }
-  },
-  "functions": {
-    "app/api/**/*.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/(.*)",
