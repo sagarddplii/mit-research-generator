@@ -1,9 +1,9 @@
-# Essential dependencies only for deployment
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
-python-dotenv==1.0.0
-httpx==0.25.2
-aiohttp==3.9.1
-requests==2.31.0
+# Essential dependencies only for deployment - Python 3.13 compatible
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+python-dotenv>=1.0.0
+httpx>=0.26.0
+aiohttp>=3.9.3
+requests>=2.31.0
