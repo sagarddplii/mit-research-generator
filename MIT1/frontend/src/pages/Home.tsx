@@ -38,6 +38,11 @@ const Home: React.FC = () => {
   // const [selectedReference, setSelectedReference] = useState<any>(null);
 
   const handleSearch = async (query: string, filters: SearchFilters) => {
+    if (loading) {
+      console.log('Search already in progress, ignoring duplicate request');
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     setCurrentStep('results');
@@ -50,7 +55,10 @@ const Home: React.FC = () => {
       
       // Add timeout to prevent infinite loading
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => {
+        console.log('Request timeout after 60 seconds');
+        controller.abort();
+      }, 60000); // 60 second timeout (backend takes ~4 seconds)
       console.log('Making API call to:', `${apiBaseUrl}/research-pipeline`);
       console.log('Request payload:', {
         query: query,
@@ -107,12 +115,25 @@ const Home: React.FC = () => {
       setResearchData(normalized);
       setCurrentStep('results');
       setActiveTab('papers');
-    } catch (err) {
+    } catch (err: any) {
       console.error('API call failed:', err);
+      console.error('Error details:', {
+        name: err.name,
+        message: err.message,
+        stack: err.stack
+      });
+      
       if (err.name === 'AbortError') {
-        setError('Request timed out. Please try again.');
+        console.log('Request was aborted - checking if it was timeout or other reason');
+        setError('Request was interrupted. The backend might be processing your request. Please try again.');
         return;
       }
+      
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        setError('Network error: Cannot connect to backend. Please check if the backend is running.');
+        return;
+      }
+      
       // Fallback: create mock data so the app remains usable without backend
       const now = new Date().toISOString();
       const mockPapers = [
