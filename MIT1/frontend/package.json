@@ -1,7 +1,7 @@
 {
-  "name": "mit-research-paper-generator-frontend",
+  "name": "mit-ai-research-platform-frontend",
   "version": "1.0.0",
-  "description": "Frontend for MIT Research Paper Generator - AI-powered research paper generation system",
+  "description": "Frontend for MIT AI Research Platform - Advanced AI-powered academic research system",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",

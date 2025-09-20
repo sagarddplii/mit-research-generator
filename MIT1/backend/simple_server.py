@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="MIT Research Paper Generator API",
-    description="AI-powered research paper generation (Simplified)",
+    title="MIT AI Research Platform API",
+    description="AI-powered academic research and paper generation",
     version="1.0.0"
 )
 
@@ -111,7 +111,7 @@ async def health_check():
     """Health check endpoint."""
     return {
         "status": "healthy",
-        "message": "Simplified server operational",
+        "message": "MIT AI Research Platform operational",
         "timestamp": datetime.now().isoformat(),
         "api_keys_configured": {
             "pubmed": bool(os.getenv('PUBMED_API_KEY')),
