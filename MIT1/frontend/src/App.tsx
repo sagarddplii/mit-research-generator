@@ -12,11 +12,11 @@ function App() {
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">MIT</span>
+                  <span className="text-white font-bold text-xs">RF</span>
                 </div>
                 <div className="hidden sm:block">
                   <h1 className="text-lg font-semibold text-gray-900">
-                    Research Paper Generator
+                    ResearchFlow
                   </h1>
                 </div>
               </div>
@@ -57,10 +57,10 @@ function App() {
               <div className="col-span-1 md:col-span-2">
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold">MIT</span>
+                    <span className="text-white font-bold">RF</span>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">
-                    Research Paper Generator
+                    ResearchFlow
                   </h3>
                 </div>
                 <p className="text-gray-600 max-w-md">

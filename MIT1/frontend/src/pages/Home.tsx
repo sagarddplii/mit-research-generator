@@ -329,7 +329,7 @@ const Home: React.FC = () => {
           <Sparkles className="h-10 w-10 text-white" />
         </div>
         <h1 className="text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">
-          MIT Research Paper Generator
+          ResearchFlow
         </h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
           Generate comprehensive research papers with AI-powered analysis, 

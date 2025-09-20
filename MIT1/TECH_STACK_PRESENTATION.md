@@ -1,26 +1,4 @@
-# 🏆 MIT Research Paper Generator - Tech Stack & Workflow
-
-## 📋 Executive Summary
-**AI-Powered Research Paper Generation System with Real Academic API Integration**
-
-- **🎯 Purpose**: Automated research paper generation with real citations
-- **⚡ Performance**: 2-6 second end-to-end processing
-- **🔗 Integration**: 4+ academic databases with live API connections
-- **🎨 Interface**: Modern React frontend with enterprise-grade backend
-
----
-
-## 🏗️ Architecture Overview
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │    Backend      │    │  External APIs  │
-│   (React)       │◄──►│   (FastAPI)     │◄──►│  (Academic DBs) │
-│                 │    │                 │    │                 │
-│ • Modern UI     │    │ • Supervisor    │    │ • Semantic      │
-│ • Responsive    │    │ • 5 Agents      │    │   Scholar       │
-│ • Real-time     │    │ • Error         │    │ • PubMed        │
-│ • Multi-format  │    │   Handling      │    │ • OpenAlex      │
+#a      │    │ • OpenAlex      │
 │   Downloads     │    │ • Citations     │    │ • CORE API      │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
