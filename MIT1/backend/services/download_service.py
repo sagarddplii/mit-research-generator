@@ -439,8 +439,8 @@ class DownloadService:
                 story.append(Spacer(1, 12))
                 
                 # Author and affiliation
-                story.append(Paragraph("MIT AI Lab", author_style))
-                story.append(Paragraph("Massachusetts Institute of Technology", affiliation_style))
+                story.append(Paragraph("ResearchFlow", author_style))
+                story.append(Paragraph("AI-Powered Research Platform", affiliation_style))
                 story.append(Spacer(1, 18))
                 
                 # Abstract
@@ -538,7 +538,7 @@ class DownloadService:
                 # Add footer with generation info
                 story.append(Spacer(1, 24))
                 from datetime import datetime
-                footer_text = f"Generated on {datetime.now().strftime('%B %d, %Y')} by MIT AI Research Platform"
+                footer_text = f"Generated on {datetime.now().strftime('%B %d, %Y')} by ResearchFlow"
                 footer_style = ParagraphStyle(
                     'Footer',
                     parent=styles['Normal'],

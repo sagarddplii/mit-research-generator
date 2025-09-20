@@ -1,7 +1,7 @@
 {
-  "name": "mit-ai-research-platform-frontend",
+  "name": "researchflow-frontend",
   "version": "1.0.0",
-  "description": "Frontend for MIT AI Research Platform - Advanced AI-powered academic research system",
+  "description": "Frontend for ResearchFlow - Advanced AI-powered academic research system",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
