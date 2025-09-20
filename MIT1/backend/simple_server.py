@@ -121,6 +121,12 @@ async def health_check():
         }
     }
 
+# Explicit OPTIONS handler for research-pipeline
+@app.options("/research-pipeline")
+async def research_pipeline_options():
+    """Handle OPTIONS preflight requests for research-pipeline."""
+    return {"message": "OK"}
+
 @app.get("/test-apis")
 async def test_api_keys():
     """Test API keys by making real calls."""
