@@ -570,8 +570,14 @@ async def download_research_paper(format_type: str, request: DownloadRequest):
             raise HTTPException(status_code=500, detail=result['error'])
         
         # Return file content
+        # Handle binary content (like PDF) vs text content
+        if result.get('is_binary', False):
+            content = result['content']  # Already bytes for binary files
+        else:
+            content = result['content'].encode('utf-8')  # Encode text to bytes
+            
         return Response(
-            content=result['content'].encode('utf-8'),
+            content=content,
             media_type=result['mime_type'],
             headers={
                 'Content-Disposition': f'attachment; filename="{result["filename"]}"',

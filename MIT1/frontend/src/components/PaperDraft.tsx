@@ -24,7 +24,8 @@ import {
   FlaskConical,
   TrendingUp,
   ChevronDown,
-  Package
+  Package,
+  FileImage
 } from 'lucide-react';
 
 interface PaperSection {
@@ -693,6 +694,24 @@ const PaperDraft: React.FC<PaperDraftProps> = ({
                     <div className="text-sm text-gray-600">With clickable links (.md)</div>
                   </div>
                   {downloading === 'markdown' && <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />}
+                </motion.button>
+
+                <motion.button
+                  onClick={() => {
+                    downloadPaper('pdf');
+                    setShowDownloadModal(false);
+                  }}
+                  disabled={downloading === 'pdf'}
+                  className="w-full flex items-center space-x-4 px-5 py-4 text-left hover:bg-red-50 hover:border-red-200 rounded-xl transition-all duration-200 text-gray-800 border-2 border-gray-100 hover:shadow-md"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <FileImage className="h-6 w-6 text-red-600" />
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-900">PDF Document</div>
+                    <div className="text-sm text-gray-600">Professional format with clickable citations (.pdf)</div>
+                  </div>
+                  {downloading === 'pdf' && <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />}
                 </motion.button>
 
                 <motion.button

@@ -43,6 +43,21 @@ class DownloadService:
                     else:
                         links.append(f"[{num}]")
                 return ', '.join(links)
+            elif format_type == 'pdf':
+                links = []
+                for num in citation_numbers:
+                    ref_index = int(num) - 1
+                    if ref_index < len(references):
+                        reference = references[ref_index]
+                        url = reference.get('url', '')
+                        title = reference.get('title', f'Reference {num}')
+                        if url:
+                            links.append(f'<link href="{url}" color="blue">[{num}]</link>')
+                        else:
+                            links.append(f"[{num}]")
+                    else:
+                        links.append(f"[{num}]")
+                return ', '.join(links)
             else:
                 # For other formats, keep original
                 return match.group(0)
@@ -298,21 +313,143 @@ class DownloadService:
             return {'error': str(e)}
     
     async def _generate_pdf(self, research_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate PDF format (requires additional libraries)."""
+        """Generate PDF format using reportlab."""
         try:
-            # For now, return instructions for PDF generation
-            # In production, you would use libraries like reportlab or weasyprint
-            
-            content = await self._generate_txt(research_data)
-            
-            return {
-                'content': content['content'],
-                'filename': f"{research_data.get('draft', {}).get('title', 'Research Paper').replace(' ', '_')}.txt",
-                'mime_type': 'text/plain',
-                'size': content['size'],
-                'note': 'PDF generation requires additional libraries. Providing text format as fallback.'
-            }
-            
+            # Try to import reportlab
+            try:
+                from reportlab.lib.pagesizes import letter, A4
+                from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+                from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+                from reportlab.lib.units import inch
+                from reportlab.lib.colors import blue, black
+                import io
+                
+                self.logger.info("Using reportlab for PDF generation")
+                
+                draft = research_data.get('draft', {})
+                references = research_data.get('references', [])
+                
+                # Create a PDF buffer
+                buffer = io.BytesIO()
+                
+                # Create the PDF document
+                doc = SimpleDocTemplate(buffer, pagesize=A4, 
+                                      rightMargin=72, leftMargin=72,
+                                      topMargin=72, bottomMargin=18)
+                
+                # Get styles
+                styles = getSampleStyleSheet()
+                
+                # Custom styles
+                title_style = ParagraphStyle(
+                    'CustomTitle',
+                    parent=styles['Heading1'],
+                    fontSize=18,
+                    spaceAfter=30,
+                    alignment=1,  # Center alignment
+                    textColor=black
+                )
+                
+                heading_style = ParagraphStyle(
+                    'CustomHeading',
+                    parent=styles['Heading2'],
+                    fontSize=14,
+                    spaceAfter=12,
+                    spaceBefore=20,
+                    textColor=black
+                )
+                
+                body_style = ParagraphStyle(
+                    'CustomBody',
+                    parent=styles['Normal'],
+                    fontSize=11,
+                    spaceAfter=12,
+                    leading=14,
+                    textColor=black
+                )
+                
+                # Story (content) list
+                story = []
+                
+                # Title
+                title = draft.get('title', 'Research Paper')
+                story.append(Paragraph(title, title_style))
+                story.append(Spacer(1, 12))
+                
+                # Abstract
+                if draft.get('abstract'):
+                    story.append(Paragraph("Abstract", heading_style))
+                    abstract_with_links = self._make_citations_clickable(draft['abstract'], references, 'pdf')
+                    story.append(Paragraph(abstract_with_links, body_style))
+                    story.append(Spacer(1, 12))
+                
+                # Sections
+                if draft.get('sections'):
+                    for section_name, section_content in draft['sections'].items():
+                        section_title = section_name.replace('_', ' ').title()
+                        story.append(Paragraph(section_title, heading_style))
+                        
+                        if isinstance(section_content, dict) and 'content' in section_content:
+                            content_with_links = self._make_citations_clickable(section_content['content'], references, 'pdf')
+                            # Split content into paragraphs
+                            paragraphs = content_with_links.split('\n\n')
+                            for para in paragraphs:
+                                if para.strip():
+                                    story.append(Paragraph(para.strip(), body_style))
+                        elif isinstance(section_content, str):
+                            content_with_links = self._make_citations_clickable(section_content, references, 'pdf')
+                            paragraphs = content_with_links.split('\n\n')
+                            for para in paragraphs:
+                                if para.strip():
+                                    story.append(Paragraph(para.strip(), body_style))
+                        
+                        story.append(Spacer(1, 12))
+                
+                # References
+                if references:
+                    story.append(PageBreak())
+                    story.append(Paragraph("References", heading_style))
+                    
+                    for i, ref in enumerate(references, 1):
+                        formatted_citation = ref.get('formatted_citation', f"Reference {i}")
+                        # Make URLs clickable in PDF
+                        if ref.get('url'):
+                            formatted_citation = formatted_citation.replace(
+                                ref['url'], 
+                                f'<link href="{ref["url"]}" color="blue">{ref["url"]}</link>'
+                            )
+                        story.append(Paragraph(f"{i}. {formatted_citation}", body_style))
+                
+                # Build the PDF
+                doc.build(story)
+                
+                # Get the PDF content
+                pdf_content = buffer.getvalue()
+                buffer.close()
+                
+                title_clean = title.replace(' ', '_').replace('/', '_').replace('\\', '_')
+                
+                return {
+                    'content': pdf_content,
+                    'filename': f"{title_clean}.pdf",
+                    'mime_type': 'application/pdf',
+                    'size': len(pdf_content),
+                    'is_binary': True
+                }
+                
+            except ImportError:
+                self.logger.warning("reportlab not available, falling back to text format")
+                # Fallback to text format
+                content = await self._generate_txt(research_data)
+                
+                return {
+                    'content': content['content'],
+                    'filename': f"{research_data.get('draft', {}).get('title', 'Research Paper').replace(' ', '_')}.txt",
+                    'mime_type': 'text/plain',
+                    'size': content['size'],
+                    'note': 'PDF generation requires reportlab library. Providing text format as fallback.'
+                }
+                
         except Exception as e:
             self.logger.error(f"Error generating PDF: {str(e)}")
             return {'error': str(e)}
