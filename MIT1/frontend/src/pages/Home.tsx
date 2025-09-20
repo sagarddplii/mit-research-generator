@@ -47,6 +47,10 @@ const Home: React.FC = () => {
       const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE || 'http://localhost:8000';
       console.log('Using API Base URL:', apiBaseUrl);
       console.log('Environment vars:', import.meta.env);
+      
+      // Add timeout to prevent infinite loading
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       const response = await fetch(`${apiBaseUrl}/research-pipeline`, {
         method: 'POST',
         headers: {
@@ -59,7 +63,10 @@ const Home: React.FC = () => {
           paper_length: filters.paperType === 'short' ? 'short' : filters.paperType === 'long' ? 'long' : 'medium',
           citation_style: 'apa'
         }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error('Failed to generate research paper');
@@ -90,6 +97,11 @@ const Home: React.FC = () => {
       setCurrentStep('results');
       setActiveTab('papers');
     } catch (err) {
+      console.error('API call failed:', err);
+      if (err.name === 'AbortError') {
+        setError('Request timed out. Please try again.');
+        return;
+      }
       // Fallback: create mock data so the app remains usable without backend
       const now = new Date().toISOString();
       const mockPapers = [
