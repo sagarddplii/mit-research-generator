@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Download, 
@@ -70,6 +70,18 @@ const PaperDraft: React.FC<PaperDraftProps> = ({
   const [downloading, setDownloading] = useState<string | null>(null);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const paperRef = useRef<HTMLDivElement>(null);
+  
+  // Track edited content
+  const [editedPaper, setEditedPaper] = useState(paper);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [editingAbstract, setEditingAbstract] = useState(false);
+  const [tempTitle, setTempTitle] = useState('');
+  const [tempAbstract, setTempAbstract] = useState('');
+  
+  // Update edited paper when original paper changes
+  useEffect(() => {
+    setEditedPaper(paper);
+  }, [paper]);
 
   // Function to make citations clickable
   const makeCitationsClickable = (text: string) => {
@@ -103,8 +115,23 @@ const PaperDraft: React.FC<PaperDraftProps> = ({
   };
 
   const handleSave = () => {
-    if (editingSection && onEdit) {
-      onEdit(editingSection, editContent);
+    if (editingSection) {
+      // Update the edited paper with new content
+      setEditedPaper(prev => ({
+        ...prev,
+        sections: {
+          ...prev.sections,
+          [editingSection]: {
+            ...prev.sections[editingSection],
+            content: editContent
+          }
+        }
+      }));
+      
+      // Call the original onEdit callback if provided
+      if (onEdit) {
+        onEdit(editingSection, editContent);
+      }
     }
     setEditingSection(null);
     setEditContent('');
@@ -116,6 +143,44 @@ const PaperDraft: React.FC<PaperDraftProps> = ({
   const handleCancel = () => {
     setEditingSection(null);
     setEditContent('');
+  };
+
+  const handleTitleEdit = () => {
+    setTempTitle(editedPaper.title);
+    setEditingTitle(true);
+  };
+
+  const handleTitleSave = () => {
+    setEditedPaper(prev => ({
+      ...prev,
+      title: tempTitle
+    }));
+    setEditingTitle(false);
+    setTempTitle('');
+  };
+
+  const handleTitleCancel = () => {
+    setEditingTitle(false);
+    setTempTitle('');
+  };
+
+  const handleAbstractEdit = () => {
+    setTempAbstract(editedPaper.abstract);
+    setEditingAbstract(true);
+  };
+
+  const handleAbstractSave = () => {
+    setEditedPaper(prev => ({
+      ...prev,
+      abstract: tempAbstract
+    }));
+    setEditingAbstract(false);
+    setTempAbstract('');
+  };
+
+  const handleAbstractCancel = () => {
+    setEditingAbstract(false);
+    setTempAbstract('');
   };
 
   const copyToClipboard = async (text: string, section: string) => {
@@ -133,9 +198,9 @@ const PaperDraft: React.FC<PaperDraftProps> = ({
       setDownloading(format);
       setShowDownloadMenu(false);
       
-      // Prepare research data for download
+      // Prepare research data for download using edited content
       const researchData = {
-        draft: paper,
+        draft: editedPaper, // Use edited paper instead of original
         references: references, // Use the references prop
         summaries: {},
         analytics: {}
@@ -258,9 +323,41 @@ const PaperDraft: React.FC<PaperDraftProps> = ({
               transition={{ delay: 0.2 }}
               className="flex-1"
             >
-              <h1 className="text-3xl font-bold mb-3 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                {paper.title}
-              </h1>
+              {editingTitle ? (
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    value={tempTitle}
+                    onChange={(e) => setTempTitle(e.target.value)}
+                    className="text-3xl font-bold bg-white/10 backdrop-blur-sm border border-white/30 rounded-lg px-3 py-2 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 w-full"
+                    placeholder="Enter paper title..."
+                    autoFocus
+                  />
+                  <div className="flex space-x-2 mt-2">
+                    <button
+                      onClick={handleTitleSave}
+                      className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={handleTitleCancel}
+                      className="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <h1 
+                  className="text-3xl font-bold mb-3 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={editable ? handleTitleEdit : undefined}
+                  title={editable ? "Click to edit title" : undefined}
+                >
+                  {editedPaper.title}
+                  {editable && <Edit className="inline-block ml-2 h-5 w-5 text-white/70" />}
+                </h1>
+              )}
               <div className="flex items-center space-x-6 text-blue-100">
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4" />
@@ -429,7 +526,7 @@ const PaperDraft: React.FC<PaperDraftProps> = ({
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <p className="text-gray-700 leading-relaxed text-lg">{paper.abstract}</p>
+                  <p className="text-gray-700 leading-relaxed text-lg">{editedPaper.abstract}</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -592,7 +689,7 @@ const PaperDraft: React.FC<PaperDraftProps> = ({
                     <div 
                       className="text-gray-700 leading-relaxed text-lg whitespace-pre-wrap"
                       dangerouslySetInnerHTML={{
-                        __html: makeCitationsClickable(section.content)
+                        __html: makeCitationsClickable(editedPaper.sections[sectionKey]?.content || section.content)
                       }}
                     />
                   </motion.div>
