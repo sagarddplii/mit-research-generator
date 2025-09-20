@@ -639,6 +639,7 @@ const Home: React.FC = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Generated Paper Draft</h3>
         <PaperDraft 
           paper={researchData.draft_paper}
+          references={researchData.references}
           editable={true}
         />
       </div>

@@ -44,6 +44,7 @@ interface PaperDraftProps {
       topic: string;
     };
   };
+  references?: any[]; // Add references prop
   onEdit?: (section: string, content: string) => void;
   onSave?: () => void;
   onReorder?: (sectionId: string, direction: 'up' | 'down') => void;
@@ -52,9 +53,10 @@ interface PaperDraftProps {
 
 const PaperDraft: React.FC<PaperDraftProps> = ({ 
   paper, 
+  references = [],
   onEdit, 
   onSave, 
-  onReorder,
+  onReorder, 
   editable = false 
 }) => {
   const [editingSection, setEditingSection] = useState<string | null>(null);
@@ -67,6 +69,31 @@ const PaperDraft: React.FC<PaperDraftProps> = ({
   const [downloading, setDownloading] = useState<string | null>(null);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const paperRef = useRef<HTMLDivElement>(null);
+
+  // Function to make citations clickable
+  const makeCitationsClickable = (text: string) => {
+    // Pattern to match citations like [1], [2], [1, 2, 3], etc.
+    const citationPattern = /\[(\d+(?:,\s*\d+)*)\]/g;
+    
+    return text.replace(citationPattern, (match, numbers) => {
+      const citationNumbers = numbers.split(',').map((n: string) => n.trim());
+      const links = citationNumbers.map((num: string) => {
+        const refIndex = parseInt(num) - 1;
+        const reference = references[refIndex];
+        
+        if (reference && reference.url) {
+          return `<a href="${reference.url}" target="_blank" rel="noopener noreferrer" 
+                    class="text-blue-600 hover:text-blue-800 font-semibold underline cursor-pointer 
+                           bg-blue-50 px-1 py-0.5 rounded transition-all duration-200 hover:bg-blue-100"
+                    title="${reference.title || 'Reference ' + num}">[${num}]</a>`;
+        } else {
+          return `<span class="text-blue-600 font-semibold bg-blue-50 px-1 py-0.5 rounded">[${num}]</span>`;
+        }
+      });
+      
+      return links.join(', ');
+    });
+  };
 
   const handleEdit = (sectionKey: string) => {
     const section = paper.sections[sectionKey];
@@ -108,7 +135,7 @@ const PaperDraft: React.FC<PaperDraftProps> = ({
       // Prepare research data for download
       const researchData = {
         draft: paper,
-        references: [], // Will be populated from parent component if available
+        references: references, // Use the references prop
         summaries: {},
         analytics: {}
       };
@@ -561,9 +588,12 @@ const PaperDraft: React.FC<PaperDraftProps> = ({
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="text-gray-700 leading-relaxed text-lg whitespace-pre-wrap">
-                      {section.content}
-                    </div>
+                    <div 
+                      className="text-gray-700 leading-relaxed text-lg whitespace-pre-wrap"
+                      dangerouslySetInnerHTML={{
+                        __html: makeCitationsClickable(section.content)
+                      }}
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>

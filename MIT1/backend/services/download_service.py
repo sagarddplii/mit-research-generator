@@ -17,6 +17,38 @@ class DownloadService:
         self.logger = logging.getLogger(__name__)
         self.supported_formats = ['pdf', 'docx', 'txt', 'json', 'bibtex', 'markdown']
     
+    def _make_citations_clickable(self, text: str, references: list, format_type: str = 'markdown') -> str:
+        """Make citations clickable with reference links."""
+        import re
+        
+        # Pattern to match citations like [1], [2], [1, 2, 3], etc.
+        citation_pattern = r'\[(\d+(?:,\s*\d+)*)\]'
+        
+        def replace_citation(match):
+            numbers = match.group(1)
+            citation_numbers = [n.strip() for n in numbers.split(',')]
+            
+            if format_type == 'markdown':
+                links = []
+                for num in citation_numbers:
+                    ref_index = int(num) - 1
+                    if ref_index < len(references):
+                        reference = references[ref_index]
+                        url = reference.get('url', '')
+                        title = reference.get('title', f'Reference {num}')
+                        if url:
+                            links.append(f"[{num}]({url} \"{title}\")")
+                        else:
+                            links.append(f"[{num}]")
+                    else:
+                        links.append(f"[{num}]")
+                return ', '.join(links)
+            else:
+                # For other formats, keep original
+                return match.group(0)
+        
+        return re.sub(citation_pattern, replace_citation, text)
+    
     async def generate_download(self, research_data: Dict[str, Any], format_type: str) -> Dict[str, Any]:
         """
         Generate downloadable content in the specified format.
@@ -155,7 +187,8 @@ class DownloadService:
             
             # Abstract
             if draft.get('abstract'):
-                content_parts.append(f"## Abstract\n\n{draft['abstract']}\n")
+                abstract_with_links = self._make_citations_clickable(draft['abstract'], references, 'markdown')
+                content_parts.append(f"## Abstract\n\n{abstract_with_links}\n")
             
             # Sections
             if draft.get('sections'):
@@ -164,9 +197,11 @@ class DownloadService:
                     content_parts.append(f"## {section_title}")
                     
                     if isinstance(section_content, dict) and 'content' in section_content:
-                        content_parts.append(f"{section_content['content']}\n")
+                        content_with_links = self._make_citations_clickable(section_content['content'], references, 'markdown')
+                        content_parts.append(f"{content_with_links}\n")
                     elif isinstance(section_content, str):
-                        content_parts.append(f"{section_content}\n")
+                        content_with_links = self._make_citations_clickable(section_content, references, 'markdown')
+                        content_parts.append(f"{content_with_links}\n")
             
             # References
             if references:
