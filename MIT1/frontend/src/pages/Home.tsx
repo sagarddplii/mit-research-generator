@@ -51,6 +51,15 @@ const Home: React.FC = () => {
       // Add timeout to prevent infinite loading
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      console.log('Making API call to:', `${apiBaseUrl}/research-pipeline`);
+      console.log('Request payload:', {
+        query: query,
+        max_papers: filters.maxPapers,
+        sources: filters.sources,
+        paper_length: filters.paperType === 'short' ? 'short' : filters.paperType === 'long' ? 'long' : 'medium',
+        citation_style: 'apa'
+      });
+      
       const response = await fetch(`${apiBaseUrl}/research-pipeline`, {
         method: 'POST',
         headers: {
@@ -67,6 +76,8 @@ const Home: React.FC = () => {
       });
       
       clearTimeout(timeoutId);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
 
       if (!response.ok) {
         throw new Error('Failed to generate research paper');
